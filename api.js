@@ -1,45 +1,44 @@
 const moment = require('moment');
 const fetch = require('node-fetch');
+
+
 const url = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery?api-version=3.0-preview.1";
 
-const query = process.argv[2];
+exports.search = function (query) {
+  // The body of this POST request was created in reference of a POST request sent off by VS Code when searching for an extension.
+  let body = JSON.stringify({
+    filters: [
+      {
+        criteria: [
+          { // FilterType 8: Platform (VS, VS Code, Azure DevOps)
+            filterType: 8,
+            value: "Microsoft.VisualStudio.Code",
+          },
+          { filterType: 12, value: "4096" }, // Don't know what this is
+          { filterType: 10, value: query } // FilterType 10: Query
+        ],
+        pageNumber: 1,
+        pageSize: 8,
+        sortBy: 0,
+        sortOrder: 0
+      }
+    ],
+    assetTypes: [],
+    flags: 914 // No clue what this is used for
+  });
 
-const first = process.argv[3] !== undefined && process.argv[3] === "--first"
-
-// The body of this POST request was created in reference of a POST request sent off by VS Code when searching for an extension.
-let body = JSON.stringify({
-  filters: [
-    {
-      criteria: [
-        { // FilterType 8: Platform (VS, VS Code, Azure DevOps)
-          filterType: 8,
-          value: "Microsoft.VisualStudio.Code",
-        },
-        { filterType: 12, value: "4096" }, // Don't know what this is
-        { filterType: 10, value: query } // FilterType 10: Query
-      ],
-      pageNumber: 1,
-      pageSize: 8,
-      sortBy: 0,
-      sortOrder: 0
+  return fetch(url, {
+    method: "POST",
+    body,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": "VS-Marketplace-Alexa-Skill/1.0"
     }
-  ],
-  assetTypes: [],
-  flags: 914 // No clue what this is used for
-});
+  }).then(res => res.json())
+    .then(data => {
+      const exts = data.results[0].extensions;
 
-fetch(url, {
-  method: "POST",
-  body,
-  headers: {
-    "Content-Type": "application/json",
-    "User-Agent": "VS-Marketplace-Alexa-Skill/1.0"
-  }
-}).then(res => res.json())
-  .then(data => {
-    const exts = data.results[0].extensions;
-
-    for (let ext of exts) {
+      let ext = exts[0];
       let extData = {};
 
       extData.name = ext.displayName;
@@ -47,7 +46,7 @@ fetch(url, {
       extData.releaseDate = moment(ext.releaseDate).format("LL");
       extData.shortDescription = ext.shortDescription;
       extData.lastUpdated = moment(ext.lastUpdated).format("LL");
-      
+
       extData.stats = {
         install: ext.statistics.filter(s => s.statisticName === "install")[0].value,
         updateCount: ext.statistics.filter(s => s.statisticName === "updateCount")[0].value,
@@ -65,9 +64,9 @@ fetch(url, {
         extData.stats.avgRating = parseFloat(avgRating[0].value.toFixed(2));
       }
 
-      console.log(extData);
-      console.log();
+      return extData;
 
-      if (first) return;
-    }
-  })
+    })
+}
+
+

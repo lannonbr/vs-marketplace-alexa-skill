@@ -4,12 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "rm package.zip",
+    "deploy": "zip -r package.zip * && aws lambda update-function-code --function-name \"VSMarketplaceAlexaSkill\" --zip-file fileb://package.zip"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "ask-sdk": "^2.1.0",
     "moment": "^2.22.2",
     "node-fetch": "^2.2.0"
   }
