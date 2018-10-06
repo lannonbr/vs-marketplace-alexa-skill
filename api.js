@@ -61,7 +61,7 @@ exports.search = function (query) {
       // Save average rating only if it exists 
       let avgRating = ext.statistics.filter(s => s.statisticName === "averagerating");
       if (avgRating.length > 0) {
-        extData.stats.avgRating = parseFloat(avgRating[0].value.toFixed(2));
+        extData.stats.avgRating = parseFloat(avgRating[0].value.toFixed(1));
       }
 
       return extData;
